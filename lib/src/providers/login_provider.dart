@@ -14,7 +14,6 @@ class LoginProvider extends InheritedWidget {
 
   @override
     bool updateShouldNotify(InheritedWidget oldWidget) {
-      // TODO: implement updateShouldNotify
-      return null;
+      return true;
     }
 }
