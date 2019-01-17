@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../blocs/main_bloc.dart';
 import '../providers/main_provider.dart';
 import '../widgets/packs_view.dart';
-import '../models/pack_model.dart';
+import '../widgets/deck_view.dart';
 
 class MainScreen extends StatelessWidget {
   Widget build(context) {
@@ -14,7 +14,7 @@ class MainScreen extends StatelessWidget {
         
         return Scaffold(
           appBar: AppBar(title: Text('CardScape'), backgroundColor: Colors.grey[800]),
-          body: snapshot.hasData ? (snapshot.data.viewIndex == 0 ? deckView(snapshot.data.packs.toString()) : packsView(snapshot.data.packs)) : Text("Empty State"),
+          body: snapshot.hasData ? (snapshot.data.viewIndex == 0 ? DeckView(bloc, snapshot.data.deck) : PacksView(bloc, snapshot.data.packs)) : Text("Empty State"),
           bottomNavigationBar: bottomNav(
             bloc, 
             snapshot.hasData ? snapshot.data.viewIndex : 0
@@ -46,11 +46,7 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  Widget deckView(String msg) {
-    return Text('Deck - $msg');
-  }
-
-    Widget packsView(List<PackModel> packs) {
-    return PacksView(packs);
+  Widget deckView(MainBloc bloc, String msg) {
+    return Text('Deck - ${bloc.state.deck}');
   }
 }
