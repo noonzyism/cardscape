@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
+
 import '../mixins/validators.dart';
 import '../models/pack_model.dart';
 import '../models/card_model.dart';
+
 import 'package:rxdart/rxdart.dart';
+
 import 'package:http/http.dart' show get;
-import 'dart:convert';
 
 class MainState {
   int viewIndex;
