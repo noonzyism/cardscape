@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1019859877354",
+    "firebase_url": "https://cardscape-db.firebaseio.com",
+    "project_id": "cardscape-db",
+    "storage_bucket": "cardscape-db.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019859877354:android:51324d60d9303625",
+        "android_client_info": {
+          "package_name": "com.titan.cardscape"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019859877354-phpfdu3s0tr033ohf497k5e48h3qvnlc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOkzeRxTNOALWvZgYmG6XnKLnMTxMFNPI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

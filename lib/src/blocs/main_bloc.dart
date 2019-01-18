@@ -6,6 +6,7 @@ import '../models/pack_model.dart';
 import '../models/card_model.dart';
 
 import 'package:rxdart/rxdart.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:http/http.dart' show get;
 
@@ -38,6 +39,15 @@ class MainBloc extends Validators {
     _navController.sink.add(0);
     _packsController.sink.add([]);
     _deckController.sink.add([]);
+    fetchFirestoreDoc();
+  }
+
+  fetchFirestoreDoc() async {
+    DocumentSnapshot doc = await Firestore.instance.collection('packs').document('0001').get();
+    List<PackModel> firestore_packs = List<PackModel>();
+    firestore_packs.add(PackModel.fromJson(doc.data));
+    state.packs = firestore_packs;
+    _packsController.sink.add(firestore_packs);
   }
 
   // called by main_screen navigation bar

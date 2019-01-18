@@ -12,7 +12,7 @@ class PackModel {
   PackModel.fromJson(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['url'];
-    title = parsedJson['title'].substring(0, 15).trim();
+    title = parsedJson['title'];
 
     cards = new List<CardModel>();
     var rand = Random().nextInt(7) + 2;
