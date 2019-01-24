@@ -13,12 +13,12 @@ class DeckView extends StatelessWidget {
       crossAxisCount: 4,
       children: cards.map<Widget>((CardModel card) {
         return Padding(
-          padding: EdgeInsets.all(8.0),
+          padding: EdgeInsets.all(2.0),
           child: GestureDetector(
             onTap: () {},
             child: GridTile(
               child: Image.network(card.imageUrl),
-              footer: Text(card.title),
+              //footer: Text(card.title),
             )
           )
         );

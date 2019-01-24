@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../mixins/validators.dart';
 import '../models/pack_model.dart';
 import '../models/card_model.dart';
+import '../models/user_model.dart';
 
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -43,11 +44,23 @@ class MainBloc extends Validators {
   }
 
   fetchFirestoreDoc() async {
+    /*
     DocumentSnapshot doc = await Firestore.instance.collection('packs').document('0001').get();
     List<PackModel> firestore_packs = List<PackModel>();
     firestore_packs.add(PackModel.fromJson(doc.data));
     state.packs = firestore_packs;
     _packsController.sink.add(firestore_packs);
+    */
+    DocumentSnapshot doc = await Firestore.instance.collection('users').document('1').get();
+
+    UserModel user = UserModel.fromJson(doc.data);
+
+    state.packs = state.packs..addAll(user.packThumbs);
+    state.deck = state.deck..addAll(user.cardThumbs);
+
+    _packsController.sink.add(state.packs);
+    _deckController.sink.add(state.deck);
+
   }
 
   // called by main_screen navigation bar

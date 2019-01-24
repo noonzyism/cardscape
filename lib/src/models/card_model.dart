@@ -11,6 +11,13 @@ class CardModel {
     title = parsedJson['title'].substring(0, 6).trim();
   }
 
+  
+  CardModel.fromUserJson(Map<String, dynamic> parsedJson) {
+    id = parsedJson['id'];
+    imageUrl = parsedJson['imageUrl'];
+    title = "Empty";
+  }
+
   @override
   String toString() {
     return '$title';
