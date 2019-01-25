@@ -21,11 +21,6 @@ class MainState {
 
 class MainBloc extends Validators {
 
-  // default initial state
-  // TODO: if possible we should try to keep only one location for the state (i.e. just the stateStream) instead of holding this separate reference and pushing it to the stream every time
-  // or alternatively just have this reference listen to the stateStream and update itself automatically
-  MainState state = MainState(0, [], []);
-
   final _navController = BehaviorSubject<int>();
   final _packsController = BehaviorSubject<List<PackModel>>();
   final _deckController = BehaviorSubject<List<CardModel>>();
@@ -34,6 +29,11 @@ class MainBloc extends Validators {
   Stream<List<PackModel>> get packStream => _packsController.stream;
   Stream<List<CardModel>> get deckStream => _deckController.stream;
   Stream<MainState> get stateStream => Observable.combineLatest3(navStream, packStream, deckStream, (n, p, d) => MainState(n, p, d));
+
+  //current state
+  int get currentView => _navController.value;
+  List<PackModel> get currentPacks => _packsController.value;
+  List<CardModel> get currentDeck => _deckController.value;
 
   // TODO: for combineLatest2 to emit a first event, all derivative streams must emit an event first - so we need a good way to initialize all data streams with defaults
   MainBloc() {
@@ -51,15 +51,12 @@ class MainBloc extends Validators {
     state.packs = firestore_packs;
     _packsController.sink.add(firestore_packs);
     */
-    DocumentSnapshot doc = await Firestore.instance.collection('users').document('1').get();
+    var doc = await Firestore.instance.collection('users').document('1').get();
 
-    UserModel user = UserModel.fromJson(doc.data);
+    var user = UserModel.fromJson(doc.data);
 
-    state.packs = state.packs..addAll(user.packThumbs);
-    state.deck = state.deck..addAll(user.cardThumbs);
-
-    _packsController.sink.add(state.packs);
-    _deckController.sink.add(state.deck);
+    _packsController.sink.add(currentPacks..addAll(user.packThumbs));
+    _deckController.sink.add(currentDeck..addAll(user.cardThumbs));
 
   }
 
@@ -67,15 +64,20 @@ class MainBloc extends Validators {
   Function(int) get changeView => _navController.sink.add;
 
   addPack() async {
-    var response = await get('https://jsonplaceholder.typicode.com/photos/${state.packs.length+1}');
-    state.packs.add(PackModel.fromJson(json.decode(response.body)));
-    _packsController.sink.add(state.packs);
+    var doc = await Firestore.instance.collection('packs').document('1').get();
+
+    var pack = PackModel.fromPackDocument(doc.data);
+
+    _packsController.sink.add(currentPacks..add(pack));
+    
   }
 
   openPack(int index) {
-    state.deck.addAll(state.packs.removeAt(index).cards);
-    _packsController.sink.add(state.packs);
-    _deckController.sink.add(state.deck);
+    var packs = currentPacks;
+    var deck = currentDeck;
+    deck.addAll(packs.removeAt(index).cards);
+    _packsController.sink.add(packs);
+    _deckController.sink.add(deck);
   }
 
   dispose() {

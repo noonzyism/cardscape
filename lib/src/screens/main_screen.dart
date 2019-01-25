@@ -45,8 +45,4 @@ class MainScreen extends StatelessWidget {
       ]
     );
   }
-
-  Widget deckView(MainBloc bloc, String msg) {
-    return Text('Deck - ${bloc.state.deck}');
-  }
 }

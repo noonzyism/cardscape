@@ -11,8 +11,8 @@ class CardModel {
     title = parsedJson['title'].substring(0, 6).trim();
   }
 
-  
-  CardModel.fromUserJson(Map<String, dynamic> parsedJson) {
+  // for parsing Cards from a Users or Packs document, where not all data is included (only id & imageUrl)
+  CardModel.fromPeripheralDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['imageUrl'];
     title = "Empty";

@@ -22,20 +22,18 @@ class PackModel {
 
   }
 
-  //TODO: once we're no longer relying on placeholder api, make this the de facto .fromJson
-  PackModel.fromFirestore(Map<String, dynamic> parsedJson) {
+  // from Firestore Packs collection document
+  PackModel.fromPackDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
-    imageUrl = parsedJson['url'];
+    imageUrl = parsedJson['imageUrl'];
     title = parsedJson['title'];
-
-    cards = new List<CardModel>();
-    var rand = Random().nextInt(7) + 2;
-    for (var i = 0; i < rand; i++) {
-      cards.add(new CardModel(i, parsedJson['thumbnailUrl'], title.substring(0, 6).trim()+'$i'));
-    }
+    var cardPool = (parsedJson['cardPool'] as List).map((c) => CardModel.fromPeripheralDocument(new Map<String, dynamic>.from(c))).toList();
+    //for now being lazy and including all cards from the cardPool into the pack, in the future it'll be a random subset of these
+    cards = cardPool;
   }
 
-  PackModel.fromUserJson(Map<String, dynamic> parsedJson) {
+  // for parsing Cards from a Users or Packs document, where not all data is included (only id & imageUrl)
+  PackModel.fromPeripheralDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['imageUrl'];
     title = "Empty";

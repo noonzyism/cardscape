@@ -16,9 +16,9 @@ class UserModel {
     id = parsedJson['id'];
     username = parsedJson['username'];
     var cardData = parsedJson['cards'] as List;
-    cardThumbs = cardData.map((c) => CardModel.fromUserJson(new Map<String, dynamic>.from(c))).toList();
+    cardThumbs = cardData.map((c) => CardModel.fromPeripheralDocument(new Map<String, dynamic>.from(c))).toList();
     var packData = parsedJson['packs'] as List;
-    packThumbs = packData.map((p) => PackModel.fromUserJson(new Map<String, dynamic>.from(p))).toList();
+    packThumbs = packData.map((p) => PackModel.fromPeripheralDocument(new Map<String, dynamic>.from(p))).toList();
   }
 
   @override
