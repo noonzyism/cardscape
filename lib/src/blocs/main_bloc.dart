@@ -44,16 +44,9 @@ class MainBloc extends Validators {
   }
 
   fetchFirestoreDoc() async {
-    /*
-    DocumentSnapshot doc = await Firestore.instance.collection('packs').document('0001').get();
-    List<PackModel> firestore_packs = List<PackModel>();
-    firestore_packs.add(PackModel.fromJson(doc.data));
-    state.packs = firestore_packs;
-    _packsController.sink.add(firestore_packs);
-    */
-    var doc = await Firestore.instance.collection('users').document('1').get();
+    var doc = await Firestore.instance.collection('users').document('0').get();
 
-    var user = UserModel.fromJson(doc.data);
+    var user = UserModel.fromUserDocument(doc.data);
 
     _packsController.sink.add(currentPacks..addAll(user.packThumbs));
     _deckController.sink.add(currentDeck..addAll(user.cardThumbs));
@@ -69,7 +62,8 @@ class MainBloc extends Validators {
     var pack = PackModel.fromPackDocument(doc.data);
 
     _packsController.sink.add(currentPacks..add(pack));
-    
+
+    saveUserData();
   }
 
   openPack(int index) {
@@ -78,6 +72,24 @@ class MainBloc extends Validators {
     deck.addAll(packs.removeAt(index).cards);
     _packsController.sink.add(packs);
     _deckController.sink.add(deck);
+
+    saveUserData();
+  }
+
+  saveUserData() async {
+    Firestore.instance.runTransaction((transaction) async {
+      final userDocRef = Firestore.instance.collection('users').document('0');
+      //final freshSnapshot = await transaction.get(userDocRef);
+      //final freshUserData = UserModel.fromUserDocument(freshSnapshot.data);
+      final packsMap = currentPacks.map((p) => p.toMapPartial()).toList();
+      final deckMap = currentDeck.map((d) => d.toMapPartial()).toList();
+
+      await transaction.update(userDocRef, {
+        'packs': packsMap,
+        'cards': deckMap
+      });
+
+    });
   }
 
   dispose() {

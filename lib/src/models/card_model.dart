@@ -18,6 +18,13 @@ class CardModel {
     title = "Empty";
   }
 
+  Map<String, dynamic> toMapPartial() {
+    return {
+      'id': id,
+      'imageUrl': imageUrl
+    };
+  }
+  
   @override
   String toString() {
     return '$title';

@@ -12,7 +12,7 @@ class UserModel {
 
   UserModel(this.id, this.username, this.cardThumbs, this.packThumbs);
 
-  UserModel.fromJson(Map<String, dynamic> parsedJson) {
+  UserModel.fromUserDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     username = parsedJson['username'];
     var cardData = parsedJson['cards'] as List;

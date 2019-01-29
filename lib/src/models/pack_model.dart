@@ -9,19 +9,6 @@ class PackModel {
 
   PackModel(this.id, this.imageUrl, this.title, this.cards);
 
-  PackModel.fromJson(Map<String, dynamic> parsedJson) {
-    id = parsedJson['id'];
-    imageUrl = parsedJson['url'];
-    title = parsedJson['title'];
-
-    cards = new List<CardModel>();
-    var rand = Random().nextInt(7) + 2;
-    for (var i = 0; i < rand; i++) {
-      cards.add(new CardModel(i, parsedJson['thumbnailUrl'], title.substring(0, 6).trim()+'$i'));
-    }
-
-  }
-
   // from Firestore Packs collection document
   PackModel.fromPackDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
@@ -42,6 +29,13 @@ class PackModel {
     for (var i = 0; i < rand; i++) {
       cards.add(new CardModel(i, imageUrl, 'Card $i'));
     }
+  }
+
+  Map<String, dynamic> toMapPartial() {
+    return {
+      'id': id,
+      'imageUrl': imageUrl
+    };
   }
 
   @override
