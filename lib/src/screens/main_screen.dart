@@ -8,6 +8,8 @@ class MainScreen extends StatelessWidget {
   Widget build(context) {
     final bloc = MainProvider.of(context);
 
+    bloc.initBackgroundEvents();
+
     return StreamBuilder(
       stream: bloc.stateStream,
       builder: (BuildContext context, AsyncSnapshot<MainState> snapshot) {

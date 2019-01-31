@@ -11,6 +11,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:http/http.dart' show get;
 
+import 'package:background_fetch/background_fetch.dart';
+
 class MainState {
   int viewIndex;
   List<PackModel> packs;
@@ -41,6 +43,32 @@ class MainBloc extends Validators {
     _packsController.sink.add([]);
     _deckController.sink.add([]);
     fetchFirestoreDoc();
+  }
+
+  Future<void> initBackgroundEvents() async {
+    // Configure BackgroundFetch.
+    BackgroundFetch.configure(BackgroundFetchConfig(
+        minimumFetchInterval: 15,
+        stopOnTerminate: true,
+        enableHeadless: false
+    ), () async {
+      // This is the fetch-event callback.
+      print('[BackgroundFetch] Event received');
+      addPack();
+      // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
+      // for taking too long in the background.
+      BackgroundFetch.finish();
+    }).then((int status) {
+      print('[BackgroundFetch] SUCCESS: $status');
+    }).catchError((e) {
+      print('[BackgroundFetch] ERROR: $e');
+    });
+
+    BackgroundFetch.start().then((int status) {
+      print('[BackgroundFetch] start success: $status');
+    }).catchError((e) {
+      print('[BackgroundFetch] start FAILURE: $e');
+    });
   }
 
   fetchFirestoreDoc() async {
