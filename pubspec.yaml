@@ -30,6 +30,8 @@ dependencies:
 
   background_fetch: '^0.1.0'
 
+  #geoflutterfire: '1.0.2'
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -13,6 +13,8 @@ import 'package:http/http.dart' show get;
 
 import 'package:background_fetch/background_fetch.dart';
 
+import 'package:location/location.dart';
+
 class MainState {
   int viewIndex;
   List<PackModel> packs;
@@ -43,6 +45,7 @@ class MainBloc extends Validators {
     _packsController.sink.add([]);
     _deckController.sink.add([]);
     fetchFirestoreDoc();
+    grabLocation();
   }
 
   Future<void> initBackgroundEvents() async {
@@ -54,6 +57,7 @@ class MainBloc extends Validators {
     ), () async {
       // This is the fetch-event callback.
       print('[BackgroundFetch] Event received');
+      grabLocation();
       addPack();
       // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
       // for taking too long in the background.
@@ -62,12 +66,6 @@ class MainBloc extends Validators {
       print('[BackgroundFetch] SUCCESS: $status');
     }).catchError((e) {
       print('[BackgroundFetch] ERROR: $e');
-    });
-
-    BackgroundFetch.start().then((int status) {
-      print('[BackgroundFetch] start success: $status');
-    }).catchError((e) {
-      print('[BackgroundFetch] start FAILURE: $e');
     });
   }
 
@@ -79,6 +77,18 @@ class MainBloc extends Validators {
     _packsController.sink.add(currentPacks..addAll(user.packThumbs));
     _deckController.sink.add(currentDeck..addAll(user.cardThumbs));
 
+  }
+
+  grabLocation() async {
+    var currentLocation = new Map<String, double>();
+    try {
+      var location = new Location();
+      currentLocation = await location.getLocation();
+      print("[GrabLocation] latitude = ${currentLocation["latitude"]}");
+      print("[GrabLocation] longitude = ${currentLocation["longitude"]}");
+    } catch (e) {
+        currentLocation = null;
+    }
   }
 
   // called by main_screen navigation bar
