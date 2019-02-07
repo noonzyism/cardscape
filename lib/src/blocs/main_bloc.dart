@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import '../mixins/validators.dart';
 import '../models/pack_model.dart';
@@ -8,12 +7,9 @@ import '../models/user_model.dart';
 
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:http/http.dart' show get;
-
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:background_fetch/background_fetch.dart';
-
-import 'package:location/location.dart';
+import 'package:geolocator/geolocator.dart';
 
 class MainState {
   int viewIndex;
@@ -28,6 +24,9 @@ class MainBloc extends Validators {
   final _navController = BehaviorSubject<int>();
   final _packsController = BehaviorSubject<List<PackModel>>();
   final _deckController = BehaviorSubject<List<CardModel>>();
+
+  final firestore = Firestore.instance;
+  final geo = Geoflutterfire();
 
   Stream<int> get navStream => _navController.stream;
   Stream<List<PackModel>> get packStream => _packsController.stream;
@@ -45,7 +44,6 @@ class MainBloc extends Validators {
     _packsController.sink.add([]);
     _deckController.sink.add([]);
     fetchFirestoreDoc();
-    grabLocation();
   }
 
   Future<void> initBackgroundEvents() async {
@@ -57,7 +55,6 @@ class MainBloc extends Validators {
     ), () async {
       // This is the fetch-event callback.
       print('[BackgroundFetch] Event received');
-      grabLocation();
       addPack();
       // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
       // for taking too long in the background.
@@ -70,7 +67,7 @@ class MainBloc extends Validators {
   }
 
   fetchFirestoreDoc() async {
-    var doc = await Firestore.instance.collection('users').document('0').get();
+    var doc = await firestore.collection('users').document('0').get();
 
     var user = UserModel.fromUserDocument(doc.data);
 
@@ -79,29 +76,45 @@ class MainBloc extends Validators {
 
   }
 
-  grabLocation() async {
-    var currentLocation = new Map<String, double>();
-    try {
-      var location = new Location();
-      currentLocation = await location.getLocation();
-      print("[GrabLocation] latitude = ${currentLocation["latitude"]}");
-      print("[GrabLocation] longitude = ${currentLocation["longitude"]}");
-    } catch (e) {
-        currentLocation = null;
-    }
-  }
-
   // called by main_screen navigation bar
   Function(int) get changeView => _navController.sink.add;
 
   addPack() async {
-    var doc = await Firestore.instance.collection('packs').document('1').get();
+    
+    var location = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
-    var pack = PackModel.fromPackDocument(doc.data);
+    if (location != null) {
+      print('[AddPack] User location: ${location.latitude}, ${location.longitude}');
+      var geopoint = geo.point(latitude: location.latitude, longitude: location.longitude);
+      var packsRef = firestore.collection('packs');
+      var radius = 50.0;
 
-    _packsController.sink.add(currentPacks..add(pack));
+      var stream = geo.collection(collectionRef: packsRef).within(geopoint, radius, 'point');
 
-    saveUserData();
+      stream.listen((List<DocumentSnapshot> resultList) {
+        if (resultList.length > 0) {
+          print('[AddPack] Found nearby pack, adding');
+          var doc = resultList[0];
+          var pack = PackModel.fromPackDocument(doc.data);
+          _packsController.sink.add(currentPacks..add(pack));
+        }
+        else {
+          print('[AddPack] No nearby packs found');
+        }
+      });
+
+      /*
+      var doc = await firestore.collection('packs').document('1').get();
+      var pack = PackModel.fromPackDocument(doc.data);
+      _packsController.sink.add(currentPacks..add(pack));
+      */
+
+      saveUserData();
+    }
+    else {
+      print('[AddPack] User location not found');
+    }
+
   }
 
   openPack(int index) {
@@ -115,8 +128,8 @@ class MainBloc extends Validators {
   }
 
   saveUserData() async {
-    Firestore.instance.runTransaction((transaction) async {
-      final userDocRef = Firestore.instance.collection('users').document('0');
+    firestore.runTransaction((transaction) async {
+      final userDocRef = firestore.collection('users').document('0');
       //final freshSnapshot = await transaction.get(userDocRef);
       //final freshUserData = UserModel.fromUserDocument(freshSnapshot.data);
       final packsMap = currentPacks.map((p) => p.toMapPartial()).toList();
