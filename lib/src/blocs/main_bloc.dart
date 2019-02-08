@@ -10,6 +10,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:device_info/device_info.dart';
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 
 class MainState {
   int viewIndex;
@@ -47,7 +49,8 @@ class MainBloc extends Validators {
   }
 
   Future<void> initBackgroundEvents() async {
-    // Configure BackgroundFetch.
+
+    // Configure & start BackgroundFetch.
     BackgroundFetch.configure(BackgroundFetchConfig(
         minimumFetchInterval: 15,
         stopOnTerminate: true,
@@ -63,6 +66,43 @@ class MainBloc extends Validators {
       print('[BackgroundFetch] SUCCESS: $status');
     }).catchError((e) {
       print('[BackgroundFetch] ERROR: $e');
+    });
+
+
+    // BackgroundGeolocation event callbacks
+
+    // Fired whenever a location is recorded
+    bg.BackgroundGeolocation.onLocation((bg.Location location) {
+      print('[location] - $location');
+    });
+
+    // Fired whenever the plugin changes motion-state (stationary->moving and vice-versa)
+    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
+      print('[motionchange] - $location');
+    });
+
+    // Fired whenever the state of location-services changes.  Always fired at boot
+    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
+      print('[providerchange] - $event');
+    });
+
+    // Configure & start BackgroundGeolocation
+    bg.BackgroundGeolocation.ready(bg.Config(
+        desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+        distanceFilter: 10.0,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        debug: true,
+        logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+        notificationChannelName: "Cardscape ChannelName",
+        notificationTitle: "Cardscape",
+        notificationText: "On the hunt for packs...",
+        notificationColor: "red",
+        reset: true
+    )).then((bg.State state) {
+      if (!state.enabled) {
+        bg.BackgroundGeolocation.start();
+      }
     });
   }
 
