@@ -97,7 +97,7 @@ class MainBloc extends Validators {
         notificationChannelName: "Cardscape ChannelName",
         notificationTitle: "Cardscape",
         notificationText: "On the hunt for packs...",
-        notificationColor: "red",
+        notificationColor: "blue",
         reset: true
     )).then((bg.State state) {
       if (!state.enabled) {

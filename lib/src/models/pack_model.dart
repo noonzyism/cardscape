@@ -23,18 +23,21 @@ class PackModel {
   PackModel.fromPeripheralDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['imageUrl'];
-    title = "Empty";
+    title = parsedJson['title'];
+
+
     cards = new List<CardModel>();
     var rand = Random().nextInt(7) + 2;
     for (var i = 0; i < rand; i++) {
-      cards.add(new CardModel(i, imageUrl, 'Card $i'));
+      cards.add(new CardModel(i, imageUrl, 'Default $i'));
     }
   }
 
   Map<String, dynamic> toMapPartial() {
     return {
       'id': id,
-      'imageUrl': imageUrl
+      'imageUrl': imageUrl,
+      'title': title
     };
   }
 

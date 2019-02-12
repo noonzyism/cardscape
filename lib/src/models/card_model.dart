@@ -15,13 +15,14 @@ class CardModel {
   CardModel.fromPeripheralDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['imageUrl'];
-    title = "Empty";
+    title = parsedJson['title'];
   }
 
   Map<String, dynamic> toMapPartial() {
     return {
       'id': id,
-      'imageUrl': imageUrl
+      'imageUrl': imageUrl,
+      'title': title
     };
   }
   
