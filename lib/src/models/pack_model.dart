@@ -19,7 +19,7 @@ class PackModel {
     cards = cardPool;
   }
 
-  // for parsing Cards from a Users or Packs document, where not all data is included (only id & imageUrl)
+  // for parsing Cards from a Users or Packs document, where not all data is included (only id, imageUrl, & title)
   PackModel.fromPeripheralDocument(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
     imageUrl = parsedJson['imageUrl'];

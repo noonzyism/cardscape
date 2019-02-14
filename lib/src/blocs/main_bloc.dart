@@ -26,25 +26,32 @@ class MainBloc extends Validators {
   final _navController = BehaviorSubject<int>();
   final _packsController = BehaviorSubject<List<PackModel>>();
   final _deckController = BehaviorSubject<List<CardModel>>();
+  final _logsController = BehaviorSubject<List<Map<String, dynamic>>>();
 
   final firestore = Firestore.instance;
   final geo = Geoflutterfire();
 
+  Stream<List<Map<String, dynamic>>> get logStream => _logsController.stream;
+
   Stream<int> get navStream => _navController.stream;
   Stream<List<PackModel>> get packStream => _packsController.stream;
   Stream<List<CardModel>> get deckStream => _deckController.stream;
+  //not including logs stream in the stateStream since they currently have no relevance on the front-end of the app
+  //stateStream is listened to by the frontend for new data that requires re-rendering
   Stream<MainState> get stateStream => Observable.combineLatest3(navStream, packStream, deckStream, (n, p, d) => MainState(n, p, d));
 
-  //current state
+  //current state - get latest emitted value from stream
   int get currentView => _navController.value;
   List<PackModel> get currentPacks => _packsController.value;
   List<CardModel> get currentDeck => _deckController.value;
+  List<Map<String, dynamic>> get currentLogs => _logsController.value;
 
-  // TODO: for combineLatest2 to emit a first event, all derivative streams must emit an event first - so we need a good way to initialize all data streams with defaults
+  // TODO: for combineLatest to emit a first event, all derivative streams must emit an event first - so we need a good way to initialize all data streams with defaults
   MainBloc() {
     _navController.sink.add(0);
     _packsController.sink.add([]);
     _deckController.sink.add([]);
+    _logsController.sink.add([]);
     fetchFirestoreDoc();
   }
 
@@ -58,7 +65,7 @@ class MainBloc extends Validators {
     ), () async {
       // This is the fetch-event callback.
       print('[BackgroundFetch] Event received');
-      addPack();
+      //addPack(); //for now I'm commenting this out as pack adding logic will be done in the location callbacks below
       // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
       // for taking too long in the background.
       BackgroundFetch.finish();
@@ -113,7 +120,7 @@ class MainBloc extends Validators {
 
     _packsController.sink.add(currentPacks..addAll(user.packThumbs));
     _deckController.sink.add(currentDeck..addAll(user.cardThumbs));
-
+    _logsController.sink.add(currentLogs..addAll(user.logs));
   }
 
   // called by main_screen navigation bar
@@ -137,6 +144,7 @@ class MainBloc extends Validators {
           var doc = resultList[0];
           var pack = PackModel.fromPackDocument(doc.data);
           _packsController.sink.add(currentPacks..add(pack));
+          log('Added new pack ${pack.title}', geopoint);
         }
         else {
           print('[AddPack] No nearby packs found');
@@ -167,17 +175,30 @@ class MainBloc extends Validators {
     saveUserData();
   }
 
+  log(String msg, GeoFirePoint geopoint) {
+    var currentLogsOrDefault = currentLogs ?? new List<Map<String, dynamic>>(); 
+    _logsController.sink.add(currentLogsOrDefault..add(
+      {'message': msg,
+       'timestamp': DateTime.now(),
+       'location': geopoint?.data
+      }
+    ));
+  }
+
   saveUserData() async {
     firestore.runTransaction((transaction) async {
       final userDocRef = firestore.collection('users').document('0');
+      //TODO: we eventually want to uncomment these lines & make sure our user data is up to date with the DB before committing any changes
       //final freshSnapshot = await transaction.get(userDocRef);
       //final freshUserData = UserModel.fromUserDocument(freshSnapshot.data);
       final packsMap = currentPacks.map((p) => p.toMapPartial()).toList();
       final deckMap = currentDeck.map((d) => d.toMapPartial()).toList();
+      final logsMap = currentLogs;
 
       await transaction.update(userDocRef, {
         'packs': packsMap,
-        'cards': deckMap
+        'cards': deckMap,
+        'logs': logsMap
       });
 
     });
@@ -187,6 +208,7 @@ class MainBloc extends Validators {
     _navController.close();
     _packsController.close();
     _deckController.close();
+    _logsController.close();
   }
 
 }
