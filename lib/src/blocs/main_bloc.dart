@@ -23,20 +23,24 @@ class MainState {
 
 class MainBloc extends Validators {
 
+  final geo = Geoflutterfire();
+  final firestore = Firestore.instance;
+
   final _navController = BehaviorSubject<int>();
   final _packsController = BehaviorSubject<List<PackModel>>();
   final _deckController = BehaviorSubject<List<CardModel>>();
   final _logsController = BehaviorSubject<List<Map<String, dynamic>>>();
-
-  final firestore = Firestore.instance;
-  final geo = Geoflutterfire();
+  final _timeController = BehaviorSubject<DateTime>();
+  final _geoController = BehaviorSubject<GeoFirePoint>();
 
   Stream<List<Map<String, dynamic>>> get logStream => _logsController.stream;
+  Stream<DateTime> get timeStream => _timeController.stream;
+  Stream<GeoFirePoint> get geoStream => _geoController.stream;
 
   Stream<int> get navStream => _navController.stream;
   Stream<List<PackModel>> get packStream => _packsController.stream;
   Stream<List<CardModel>> get deckStream => _deckController.stream;
-  //not including logs stream in the stateStream since they currently have no relevance on the front-end of the app
+  //not including logs/time/geo streams in the stateStream since they currently have no relevance on the front-end of the app
   //stateStream is listened to by the frontend for new data that requires re-rendering
   Stream<MainState> get stateStream => Observable.combineLatest3(navStream, packStream, deckStream, (n, p, d) => MainState(n, p, d));
 
@@ -45,13 +49,18 @@ class MainBloc extends Validators {
   List<PackModel> get currentPacks => _packsController.value;
   List<CardModel> get currentDeck => _deckController.value;
   List<Map<String, dynamic>> get currentLogs => _logsController.value;
+  DateTime get lastCheckTime => _timeController.value;
+  GeoFirePoint get lastCheckPoint => _geoController.value;
 
   // TODO: for combineLatest to emit a first event, all derivative streams must emit an event first - so we need a good way to initialize all data streams with defaults
+  //find a way to avoid this or better initiate these if necessary
   MainBloc() {
     _navController.sink.add(0);
     _packsController.sink.add([]);
     _deckController.sink.add([]);
+    //log stream isn't included in the merged stream so it doesn't apply, but we have a separate bug where it also needs to be initialized to work properly
     _logsController.sink.add([]);
+    _timeController.sink.add(DateTime.now());
     fetchFirestoreDoc();
   }
 
@@ -81,11 +90,17 @@ class MainBloc extends Validators {
     // Fired whenever a location is recorded
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
       print('[location] - $location');
+      var geopoint = GeoFirePoint(location.coords.latitude, location.coords.longitude);
+      _geoController.sink.add(geopoint);
+      checkAddPack(geopoint);
     });
 
     // Fired whenever the plugin changes motion-state (stationary->moving and vice-versa)
     bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
       print('[motionchange] - $location');
+      var geopoint = GeoFirePoint(location.coords.latitude, location.coords.longitude);
+      _geoController.sink.add(geopoint);
+      checkAddPack(geopoint);
     });
 
     // Fired whenever the state of location-services changes.  Always fired at boot
@@ -126,38 +141,55 @@ class MainBloc extends Validators {
   // called by main_screen navigation bar
   Function(int) get changeView => _navController.sink.add;
 
+  Future<GeoFirePoint> getLocation() async {
+    var location = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    return location != null ? geo.point(latitude: location.latitude, longitude: location.longitude) : null;
+  }
+
+  //checks location & and last check time and adds a new pack if the criteria fits, with some degree of randomness
+  checkAddPack(GeoFirePoint geopoint) async {
+      if (geopoint != null) {
+        var now = DateTime.now();
+        var nextCheckTime = lastCheckTime.add(new Duration(minutes: 15));
+
+        print('[LastCheckTime] $lastCheckTime, [NextCheckTime] $nextCheckTime, [Now] $now');
+
+        if (now.isAfter(nextCheckTime)) {
+          _timeController.sink.add(nextCheckTime);
+          addPackFrom(geopoint, 15.0);
+        }
+      }
+  }
+
+  addPackFrom(GeoFirePoint geopoint, double radius) async {
+    //if you've reached this point, geopoint should not be null
+    var packsRef = firestore.collection('packs');
+    var radius = 50.0;
+
+    var stream = geo.collection(collectionRef: packsRef).within(geopoint, radius, 'point');
+
+    stream.listen((List<DocumentSnapshot> resultList) {
+      if (resultList.length > 0) {
+        print('[AddPackFrom] Found nearby pack, adding');
+        var doc = resultList[0];
+        var pack = PackModel.fromPackDocument(doc.data);
+        _packsController.sink.add(currentPacks..add(pack));
+        log('Added new pack ${pack.title}', geopoint);
+      }
+      else {
+        print('[AddPackFrom] No nearby packs found');
+      }
+    });
+
+    saveUserData();
+  }
+
   addPack() async {
     
-    var location = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    var geopoint = await getLocation();
 
-    if (location != null) {
-      print('[AddPack] User location: ${location.latitude}, ${location.longitude}');
-      var geopoint = geo.point(latitude: location.latitude, longitude: location.longitude);
-      var packsRef = firestore.collection('packs');
-      var radius = 50.0;
-
-      var stream = geo.collection(collectionRef: packsRef).within(geopoint, radius, 'point');
-
-      stream.listen((List<DocumentSnapshot> resultList) {
-        if (resultList.length > 0) {
-          print('[AddPack] Found nearby pack, adding');
-          var doc = resultList[0];
-          var pack = PackModel.fromPackDocument(doc.data);
-          _packsController.sink.add(currentPacks..add(pack));
-          log('Added new pack ${pack.title}', geopoint);
-        }
-        else {
-          print('[AddPack] No nearby packs found');
-        }
-      });
-
-      /*
-      var doc = await firestore.collection('packs').document('1').get();
-      var pack = PackModel.fromPackDocument(doc.data);
-      _packsController.sink.add(currentPacks..add(pack));
-      */
-
-      saveUserData();
+    if (geopoint != null) {
+      addPackFrom(geopoint, 15.0);
     }
     else {
       print('[AddPack] User location not found');
@@ -209,6 +241,8 @@ class MainBloc extends Validators {
     _packsController.close();
     _deckController.close();
     _logsController.close();
+    _timeController.close();
+    _geoController.close();
   }
 
 }
