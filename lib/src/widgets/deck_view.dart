@@ -11,10 +11,10 @@ class DeckView extends StatelessWidget {
   Widget build(context) {
     return GridView.count(
       crossAxisCount: 2,
-      childAspectRatio: (480 / 600),
+      childAspectRatio: (720 / 1280),
       children: cards.map<Widget>((CardModel card) {
         return Container(
-          margin: EdgeInsets.all(0.0),
+          margin: EdgeInsets.all(1.0),
           child: GestureDetector(
             onTap: () {},
             child: GridTile(
