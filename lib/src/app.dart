@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/main_screen.dart';
+import 'screens/launch_screen.dart';
 import 'providers/main_provider.dart';
 
 class App extends StatelessWidget {
@@ -7,7 +7,8 @@ class App extends StatelessWidget {
     return MainProvider(
       child: MaterialApp(
         title: 'CardScape',
-        home: MainScreen()
+        home: LaunchScreen(),
+        theme: ThemeData.dark().copyWith(accentColor: Colors.cyan[300]),
       )
     );
   }

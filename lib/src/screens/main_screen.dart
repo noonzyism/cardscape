@@ -15,7 +15,7 @@ class MainScreen extends StatelessWidget {
       builder: (BuildContext context, AsyncSnapshot<MainState> snapshot) {
         
         return Scaffold(
-          appBar: AppBar(title: Text('CardScape'), backgroundColor: Colors.grey[800]),
+          //appBar: AppBar(title: Text('CardScape'), backgroundColor: Colors.black),
           body: snapshot.hasData ? (snapshot.data.viewIndex == 0 ? DeckView(bloc, snapshot.data.deck) : PacksView(bloc, snapshot.data.packs)) : Text("Empty State"),
           bottomNavigationBar: bottomNav(
             bloc, 
@@ -34,7 +34,6 @@ class MainScreen extends StatelessWidget {
     return BottomNavigationBar(
       onTap: bloc.changeView,
       currentIndex: index,
-      fixedColor: Colors.black,
       items: <BottomNavigationBarItem>[
         BottomNavigationBarItem(
           icon: Icon(Icons.view_carousel), 
