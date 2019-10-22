@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import '../mixins/validators.dart';
-import '../models/pack_model.dart';
-import '../models/card_model.dart';
+import '../models/user_pack_model.dart';
+import '../models/user_card_model.dart';
 import '../models/user_model.dart';
 
 import 'package:rxdart/rxdart.dart';
@@ -15,8 +15,8 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
 
 class MainState {
   int viewIndex;
-  List<PackModel> packs;
-  List<CardModel> deck;
+  List<UserPackModel> packs;
+  List<UserCardModel> deck;
 
   MainState(this.viewIndex, this.packs, this.deck);
 }
@@ -27,8 +27,8 @@ class MainBloc extends Validators {
   final firestore = Firestore.instance;
 
   final _navController = BehaviorSubject<int>();
-  final _packsController = BehaviorSubject<List<PackModel>>();
-  final _deckController = BehaviorSubject<List<CardModel>>();
+  final _packsController = BehaviorSubject<List<UserPackModel>>();
+  final _deckController = BehaviorSubject<List<UserCardModel>>();
   final _logsController = BehaviorSubject<List<Map<String, dynamic>>>();
   final _timeController = BehaviorSubject<DateTime>();
   final _geoController = BehaviorSubject<GeoFirePoint>();
@@ -38,16 +38,16 @@ class MainBloc extends Validators {
   Stream<GeoFirePoint> get geoStream => _geoController.stream;
 
   Stream<int> get navStream => _navController.stream;
-  Stream<List<PackModel>> get packStream => _packsController.stream;
-  Stream<List<CardModel>> get deckStream => _deckController.stream;
+  Stream<List<UserPackModel>> get packStream => _packsController.stream;
+  Stream<List<UserCardModel>> get deckStream => _deckController.stream;
   //not including logs/time/geo streams in the stateStream since they currently have no relevance on the front-end of the app
   //stateStream is listened to by the frontend for new data that requires re-rendering
   Stream<MainState> get stateStream => Observable.combineLatest3(navStream, packStream, deckStream, (n, p, d) => MainState(n, p, d));
 
   //current state - get latest emitted value from stream
   int get currentView => _navController.value;
-  List<PackModel> get currentPacks => _packsController.value;
-  List<CardModel> get currentDeck => _deckController.value;
+  List<UserPackModel> get currentPacks => _packsController.value;
+  List<UserCardModel> get currentDeck => _deckController.value;
   List<Map<String, dynamic>> get currentLogs => _logsController.value;
   DateTime get lastCheckTime => _timeController.value;
   GeoFirePoint get lastCheckPoint => _geoController.value;
@@ -166,15 +166,17 @@ class MainBloc extends Validators {
     var packsRef = firestore.collection('packs');
     var radius = 50.0;
 
-    var stream = geo.collection(collectionRef: packsRef).within(geopoint, radius, 'point');
+    var stream = geo.collection(collectionRef: packsRef).within(geopoint, radius, 'location');
 
     stream.listen((List<DocumentSnapshot> resultList) {
       if (resultList.length > 0) {
         print('[AddPackFrom] Found nearby pack, adding');
         var doc = resultList[0];
-        var pack = PackModel.fromPackDocument(doc.data);
+        var pack = new UserPackModel.generateFromPackDoc(doc.data, firestore, geo);
+        print('[AddPackFrom] Adding new pack ${pack.title}');
         _packsController.sink.add(currentPacks..add(pack));
-        log('Added new pack ${pack.title}', geopoint);
+        print('[AddPackFrom] Added new pack ${pack.title}');
+        print('[AddPackFrom] Finaleeeeeeee card list ${pack.cards}');
       }
       else {
         print('[AddPackFrom] No nearby packs found');

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/pack_model.dart';
+import '../models/user_pack_model.dart';
 import '../blocs/main_bloc.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 
 class PacksView extends StatelessWidget {
   final MainBloc bloc;
-  final List<PackModel> packs;
+  final List<UserPackModel> packs;
 
   PacksView(this.bloc, this.packs);
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/card_model.dart';
+import '../models/user_card_model.dart';
 import '../blocs/main_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class DeckView extends StatelessWidget {
   final MainBloc bloc;
-  final List<CardModel> cards;
+  final List<UserCardModel> cards;
 
   DeckView(this.bloc, this.cards);
 
@@ -16,7 +16,7 @@ class DeckView extends StatelessWidget {
   Widget staggeredPackGrid() {
     return StaggeredGridView.count(
       crossAxisCount: 3,
-      children: cards.map<Widget>((CardModel card) {
+      children: cards.map<Widget>((UserCardModel card) {
         return Container(
           margin: EdgeInsets.all(1.0),
           child: GestureDetector(
@@ -35,7 +35,7 @@ class DeckView extends StatelessWidget {
     return GridView.count(
       crossAxisCount: 3,
       childAspectRatio: (720 / 1280),
-      children: cards.map<Widget>((CardModel card) {
+      children: cards.map<Widget>((UserCardModel card) {
         return Container(
           margin: EdgeInsets.all(1.0),
           child: GestureDetector(

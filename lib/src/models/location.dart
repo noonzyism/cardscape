@@ -1,15 +1,21 @@
-import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+/*
+class Location {
 
-class CardModel {
+  //this is the model of how locations are stored in the DB, mimics the structure of https://pub.dartlang.org/packages/geoflutterfire
   int id;
   String imageUrl;
   String title;
   String description;
   int rarity;
   List<String> collections;
-  GeoFirePoint location;
 
-  CardModel(this.id, this.imageUrl, this.title, this.rarity, this.collections, this.location);
+  String geohash;
+  GeoPoint geopoint;
+  
+
+
+  Location(this.id, this.imageUrl, this.title, this.rarity);
 
   CardModel.fromJson(Map<String, dynamic> parsedJson) {
     id = parsedJson['id'];
@@ -17,8 +23,6 @@ class CardModel {
     title = parsedJson['title'].substring(0, 6).trim();
     description = parsedJson['description'];
     rarity = parsedJson['rarity'];
-    collections = parsedJson['collections'] as List<String>;
-    location = parsedJson['location'] as GeoFirePoint;
   }
 
   // for parsing Cards from a Users or Packs document, where not all data is included
@@ -43,3 +47,4 @@ class CardModel {
     return '$title';
   }
 }
+*/
